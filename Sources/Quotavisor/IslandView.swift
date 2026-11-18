@@ -48,22 +48,27 @@ struct IslandView: View {
                 .background(alignment: .top) {
                     // Sombra solo por debajo de la barra de menús: así el borde
                     // superior y las orejas se funden limpios con el notch físico.
+                    // Va siempre al tamaño final (no se recalcula en cada fotograma del
+                    // muelle) y aparece cuando la isla ya casi ha crecido: abrir no cuesta
+                    // nada aunque el Mac vaya cargado. Dos capas para que se difumine suave.
+                    let full = store.expandedSize
                     let top = store.geometry.notchHeight + 16
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .fill(Palette.notch)
-                        .frame(width: max(0, size.width - store.earRadius * 2 - 24),
-                               height: max(0, size.height - top))
+                        .frame(width: max(0, full.width - store.earRadius * 2 - 40),
+                               height: max(0, full.height - top - 14))
                         .offset(y: top)
-                        .shadow(color: .black.opacity(exp ? 0.45 : 0), radius: 18, y: 12)
+                        .shadow(color: .black.opacity(0.22), radius: 10, y: 6)
+                        .shadow(color: .black.opacity(0.30), radius: 30, y: 18)
                         .opacity(exp ? 1 : 0)
                         // Al cerrar, la sombra desaparece al instante: sin estela.
-                        .transaction { if !exp { $0.animation = nil } }
+                        .animation(exp ? .easeOut(duration: 0.22).delay(0.26) : nil, value: exp)
                 }
 
             Group {
                 if exp {
                     ExpandedContent().transition(.asymmetric(
-                        insertion: .blurFade,
+                        insertion: .riseFade,
                         removal: .opacity.animation(.easeOut(duration: 0.09))))
                 } else {
                     CollapsedContent().transition(.asymmetric(
@@ -234,6 +239,14 @@ struct ProviderRow: View {
                 .font(.system(size: 11, weight: .medium))
                 LinearMeter(value: week ?? 0, tint: store.tint(provider, percent: week))
                     .frame(width: 76, height: 4)
+                if let left = weeklyReset(now: now) {
+                    Text(left)
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundStyle(Palette.text3)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .fixedSize()
+                }
             }
         }
         .padding(.horizontal, 10)
@@ -245,6 +258,15 @@ struct ProviderRow: View {
         .onHover { hovering = $0 }
         .animation(.smooth(duration: 0.25), value: hovering)
         .animation(.smooth(duration: 0.35), value: isFeatured)
+    }
+
+    /// «se reinicia en 3 d 4 h» para la ventana semanal; nada si no hay fecha.
+    private func weeklyReset(now: Date) -> String? {
+        guard let reset = snapshot?.weekly?.resetsAt, reset > now else { return nil }
+        let mins = Int(reset.timeIntervalSince(now) / 60)
+        let d = mins / 1440, h = (mins % 1440) / 60, m = mins % 60
+        let left = d > 0 ? "\(d) d \(h) h" : h > 0 ? "\(h) h \(m) min" : "\(max(m, 1)) min"
+        return "se reinicia en \(left)"
     }
 
     private func subtitle(now: Date) -> String {
@@ -363,7 +385,22 @@ private struct BlurFade: ViewModifier {
     }
 }
 
+/// Como BlurFade pero sin desenfoque: el desenfoque de toda la vista en cada
+/// fotograma era lo que hacía ir a tirones la apertura con el Mac ocupado.
+private struct RiseFade: ViewModifier {
+    let opacity: Double
+    let y: CGFloat
+    func body(content: Content) -> some View {
+        content.opacity(opacity).offset(y: y)
+    }
+}
+
 extension AnyTransition {
+    static var riseFade: AnyTransition {
+        .modifier(active: RiseFade(opacity: 0, y: -6), identity: RiseFade(opacity: 1, y: 0))
+            .animation(.easeOut(duration: 0.22).delay(0.06))
+    }
+
     static var blurFade: AnyTransition {
         .modifier(active: BlurFade(radius: 6, opacity: 0, scale: 0.96),
                   identity: BlurFade(radius: 0, opacity: 1, scale: 1))

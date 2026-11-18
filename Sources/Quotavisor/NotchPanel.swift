@@ -8,7 +8,8 @@ final class NotchPanel: NSPanel {
     private let store: UsageStore
     private var pendingCollapse: DispatchWorkItem?
     private var pendingShrink: DispatchWorkItem?
-    private let shadowMargin: CGFloat = 28
+    /// Hueco transparente alrededor de la isla abierta para que la sombra no se corte.
+    private let shadowMargin: CGFloat = 64
     private let openAnim = Animation.spring(response: 0.4, dampingFraction: 0.9)
     /// Cierre sin rebote: amortiguamiento crítico, nunca sobrepasa el tamaño del notch.
     private let closeAnim = Animation.spring(response: 0.34, dampingFraction: 1.0)
@@ -73,6 +74,7 @@ final class NotchPanel: NSPanel {
         } else {
             midX = s.frame.midX
         }
+        (contentView as? HoverHostingView)?.hoverMargin = margin
         setFrame(NSRect(x: midX - w / 2, y: s.frame.maxY - h, width: w, height: h), display: true)
     }
 
@@ -172,11 +174,16 @@ final class HoverHostingView: NSHostingView<AnyView> {
     var onHover: ((Bool) -> Void)?
     var menuProvider: (() -> NSMenu?)?
     private var area: NSTrackingArea?
+    /// Margen de sombra: el hover cuenta solo sobre la isla, no sobre la sombra.
+    var hoverMargin: CGFloat = 0 { didSet { if hoverMargin != oldValue { updateTrackingAreas() } } }
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let area { removeTrackingArea(area) }
-        let a = NSTrackingArea(rect: bounds,
+        let m = hoverMargin
+        let rect = NSRect(x: m, y: isFlipped ? 0 : m,
+                          width: max(0, bounds.width - m * 2), height: max(0, bounds.height - m))
+        let a = NSTrackingArea(rect: rect,
                                options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
                                owner: self)
         addTrackingArea(a)
