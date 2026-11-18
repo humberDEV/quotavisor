@@ -43,7 +43,8 @@ final class NotchPanel: NSPanel {
         NSScreen.screens.first { $0.safeAreaInsets.top > 0 } ?? NSScreen.main ?? NSScreen.screens[0]
     }
 
-    func place() {
+    /// `force`: recoloca aunque el notch no haya cambiado (p. ej. al cambiar el ancho).
+    func place(force: Bool = false) {
         let s = targetScreen
         var g = NotchGeometry()
         if s.safeAreaInsets.top > 0, let l = s.auxiliaryTopLeftArea, let r = s.auxiliaryTopRightArea {
@@ -57,8 +58,13 @@ final class NotchPanel: NSPanel {
             g.notchWidth = 120
             g.notchHeight = max(NSStatusBar.system.thickness, 24)
         }
-        store.geometry = g
-        applyFrame(expanded: store.isExpanded)
+        // Al entrar o salir de pantalla completa macOS avisa de «cambio de pantalla»
+        // aunque el notch sea el mismo: si no cambió nada, no tocamos la ventana
+        // (redimensionarla a mitad de la animación era lo que daba tirones).
+        if force || g != store.geometry || frame.isEmpty {
+            store.geometry = g
+            applyFrame(expanded: store.isExpanded)
+        }
         orderFrontRegardless()
     }
 
@@ -87,7 +93,8 @@ final class NotchPanel: NSPanel {
             guard !store.isExpanded else { return }
             applyFrame(expanded: true)
             withAnimation(openAnim) { store.isExpanded = true }
-            store.refreshIfStale()
+            // La lectura (y su animación de números) espera a que termine de abrirse.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in self?.store.refreshIfStale() }
         } else {
             let work = DispatchWorkItem { [weak self] in self?.collapse() }
             pendingCollapse = work

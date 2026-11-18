@@ -65,18 +65,27 @@ struct IslandView: View {
                         .animation(exp ? .easeOut(duration: 0.22).delay(0.26) : nil, value: exp)
                 }
 
-            Group {
-                if exp {
-                    ExpandedContent().transition(.asymmetric(
-                        insertion: .riseFade,
-                        removal: .opacity.animation(.easeOut(duration: 0.09))))
-                } else {
-                    CollapsedContent().transition(.asymmetric(
-                        insertion: .opacity.animation(.easeOut(duration: 0.2).delay(0.12)),
-                        removal: .opacity.animation(.easeOut(duration: 0.08))))
-                }
+            // Las dos vistas viven siempre en la jerarquía, cada una a su tamaño final:
+            // abrir solo cambia opacidad y recorte. Nada se construye ni se recoloca
+            // en el momento de abrir, así que la primera vez va igual de fluida.
+            let full = store.expandedSize
+            ZStack(alignment: .top) {
+                ExpandedContent()
+                    .padding(.horizontal, store.earRadius)
+                    .frame(width: full.width, height: full.height, alignment: .top)
+                    .opacity(exp ? 1 : 0)
+                    .offset(y: exp ? 0 : -6)
+                    .animation(exp ? .easeOut(duration: 0.22).delay(0.06) : .easeOut(duration: 0.08), value: exp)
+                    .allowsHitTesting(exp)
+                    .accessibilityHidden(!exp)
+                CollapsedContent()
+                    .padding(.horizontal, store.earRadius)
+                    .frame(width: store.collapsedSize.width, height: store.collapsedSize.height, alignment: .top)
+                    .opacity(exp ? 0 : 1)
+                    .animation(exp ? .easeOut(duration: 0.08) : .easeOut(duration: 0.2).delay(0.12), value: exp)
+                    .allowsHitTesting(!exp)
+                    .accessibilityHidden(exp)
             }
-            .padding(.horizontal, store.earRadius)
             .frame(width: size.width, height: size.height, alignment: .top)
             .clipShape(NotchShape(earRadius: store.earRadius, bottomRadius: exp ? 24 : 10, minSize: store.collapsedSize))
         }
@@ -385,22 +394,7 @@ private struct BlurFade: ViewModifier {
     }
 }
 
-/// Como BlurFade pero sin desenfoque: el desenfoque de toda la vista en cada
-/// fotograma era lo que hacía ir a tirones la apertura con el Mac ocupado.
-private struct RiseFade: ViewModifier {
-    let opacity: Double
-    let y: CGFloat
-    func body(content: Content) -> some View {
-        content.opacity(opacity).offset(y: y)
-    }
-}
-
 extension AnyTransition {
-    static var riseFade: AnyTransition {
-        .modifier(active: RiseFade(opacity: 0, y: -6), identity: RiseFade(opacity: 1, y: 0))
-            .animation(.easeOut(duration: 0.22).delay(0.06))
-    }
-
     static var blurFade: AnyTransition {
         .modifier(active: BlurFade(radius: 6, opacity: 0, scale: 0.96),
                   identity: BlurFade(radius: 0, opacity: 1, scale: 1))

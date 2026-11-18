@@ -26,7 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.place()
         store.$sideWidth.dropFirst().removeDuplicates()
             .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.panel?.place() }
+            .sink { [weak self] _ in self?.panel?.place(force: true) }
             .store(in: &bag)
         store.start()
 
