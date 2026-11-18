@@ -69,18 +69,18 @@ enum SettingsPane: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .general: "General"
-        case .appearance: "Apariencia"
-        case .providers: "Proveedores"
-        case .about: "Acerca de"
+        case .general: L("General")
+        case .appearance: L("Apariencia")
+        case .providers: L("Proveedores")
+        case .about: L("Acerca de")
         }
     }
 
     var subtitle: String {
         switch self {
-        case .general: "Qué aparece en el notch y cada cuánto se actualiza."
-        case .appearance: "Colores y umbrales de la isla. Los cambios se ven al momento."
-        case .providers: "Las cuentas de las que Quotavisor lee tu uso."
+        case .general: L("Qué aparece en el notch y cada cuánto se actualiza.")
+        case .appearance: L("Colores y umbrales de la isla. Los cambios se ven al momento.")
+        case .providers: L("Las cuentas de las que Quotavisor lee tu uso.")
         case .about: ""
         }
     }
@@ -163,7 +163,7 @@ private struct Sidebar: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Quotavisor")
                         .font(.system(size: 15, weight: .semibold))
-                    Text("Tu cuota de IA, en el notch")
+                    Text(L("Tu cuota de IA, en el notch"))
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -365,9 +365,9 @@ private struct GeneralPane: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            FormGroup(title: "En el notch") {
+            FormGroup(title: L("En el notch")) {
                 HStack(spacing: 12) {
-                    ChoiceTile(title: "Automático", detail: "El último que uses",
+                    ChoiceTile(title: L("Automático"), detail: L("El último que uses"),
                                selected: store.pinned == nil, action: { store.pinned = nil }) {
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.system(size: 13, weight: .semibold))
@@ -378,7 +378,7 @@ private struct GeneralPane: View {
 
                     ForEach(store.enabledProviders) { p in
                         let pct = store.snapshots[p]?.session?.percent(at: .now) ?? 0
-                        ChoiceTile(title: p.name, detail: "Siempre este",
+                        ChoiceTile(title: p.name, detail: L("Siempre este"),
                                    selected: store.pinned == p, action: { store.pinned = p }) {
                             MiniIsland(provider: p, percent: pct, width: 130)
                         }
@@ -387,24 +387,24 @@ private struct GeneralPane: View {
                 .padding(14)
             }
 
-            FormGroup(title: "Actualización") {
-                Row(title: "Actualizar cada", detail: "Minutos entre lecturas") {
+            FormGroup(title: L("Actualización")) {
+                Row(title: L("Actualizar cada"), detail: L("Minutos entre lecturas")) {
                     Chips(options: [1, 2, 5, 10, 15, 30], selection: $store.refreshMinutes) { "\($0)" }
                 }
                 RowDivider()
-                Row(title: "Última lectura", detail: lastUpdated) {
+                Row(title: L("Última lectura"), detail: lastUpdated) {
                     Button {
                         store.refreshNow()
                     } label: {
-                        Label("Actualizar ahora", systemImage: "arrow.clockwise")
+                        Label(L("Actualizar ahora"), systemImage: "arrow.clockwise")
                     }
                     .disabled(store.isRefreshing)
                 }
             }
 
-            FormGroup(title: "Sistema") {
-                Row(title: "Abrir al iniciar sesión",
-                    detail: "Quotavisor se abre solo, sin icono en el Dock.") {
+            FormGroup(title: L("Sistema")) {
+                Row(title: L("Abrir al iniciar sesión"),
+                    detail: L("Quotavisor se abre solo, sin icono en el Dock.")) {
                     Toggle("", isOn: $store.launchAtLogin).toggleStyle(.switch).labelsHidden()
                 }
             }
@@ -412,9 +412,9 @@ private struct GeneralPane: View {
     }
 
     private var lastUpdated: String {
-        guard let d = Provider.allCases.compactMap({ store.snapshots[$0]?.updatedAt }).min() else { return "Cargando…" }
+        guard let d = Provider.allCases.compactMap({ store.snapshots[$0]?.updatedAt }).min() else { return L("Cargando…") }
         let s = Int(Date.now.timeIntervalSince(d))
-        return s < 60 ? "Hace un momento" : "Hace \(s / 60) min"
+        return s < 60 ? L("Hace un momento") : L("Hace %@ min", "\(s / 60)")
     }
 }
 
@@ -477,7 +477,7 @@ private struct AppearancePane: View {
         VStack(alignment: .leading, spacing: 24) {
             preview
 
-            FormGroup(title: "Colores") {
+            FormGroup(title: L("Colores")) {
                 ForEach(Array(Provider.allCases.enumerated()), id: \.element) { i, p in
                     if i > 0 { RowDivider() }
                     Row(title: p.name) {
@@ -487,22 +487,22 @@ private struct AppearancePane: View {
                 }
             }
 
-            FormGroup(title: "Umbrales") {
+            FormGroup(title: L("Umbrales")) {
                 ZoneBar(warn: store.warnAt, crit: store.critAt, base: store.baseColor(previewProvider))
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     .padding(.bottom, 4)
-                Row(title: "Aviso", detail: "El anillo pasa a ámbar.") {
+                Row(title: L("Aviso"), detail: L("El anillo pasa a ámbar.")) {
                     ValueSlider(value: $store.warnAt, range: 50...95)
                 }
                 RowDivider()
-                Row(title: "Crítico", detail: "El anillo pasa a rojo.") {
+                Row(title: L("Crítico"), detail: L("El anillo pasa a rojo.")) {
                     ValueSlider(value: $store.critAt, range: 60...100)
                 }
             }
 
             FormGroup {
-                Row(title: "Ancho de la isla", detail: "Más estrecha pisa menos la barra de menús.") {
+                Row(title: L("Ancho de la isla"), detail: L("Más estrecha pisa menos la barra de menús.")) {
                     HStack(spacing: 12) {
                         Slider(value: $store.sideWidth, in: 28...48, step: 2).frame(width: 190)
                         Text("\(Int(store.sideWidth)) pt")
@@ -512,12 +512,12 @@ private struct AppearancePane: View {
                     }
                 }
                 RowDivider()
-                Row(title: "Mostrar el símbolo %") {
+                Row(title: L("Mostrar el símbolo %")) {
                     Toggle("", isOn: $store.showPercentSign).toggleStyle(.switch).labelsHidden()
                 }
                 RowDivider()
-                Row(title: "Restablecer apariencia", detail: "Vuelve a los colores y umbrales originales.") {
-                    Button("Restablecer") { withAnimation(.smooth) { store.resetAppearance() } }
+                Row(title: L("Restablecer apariencia"), detail: L("Vuelve a los colores y umbrales originales.")) {
+                    Button(L("Restablecer")) { withAnimation(.smooth) { store.resetAppearance() } }
                 }
             }
         }
@@ -535,8 +535,8 @@ private struct AppearancePane: View {
                         HStack(spacing: 14) {
                             Image(systemName: "apple.logo").font(.system(size: 12, weight: .semibold))
                             Text("Finder").font(.system(size: 12, weight: .semibold))
-                            Text("Archivo").font(.system(size: 12))
-                            Text("Edición").font(.system(size: 12))
+                            Text(L("Archivo")).font(.system(size: 12))
+                            Text(L("Edición")).font(.system(size: 12))
                         }
                         .foregroundStyle(.white.opacity(0.9))
                         .padding(.leading, 14)
@@ -562,7 +562,7 @@ private struct AppearancePane: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 190)
-                Text("Simular uso")
+                Text(L("Simular uso"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 Slider(value: $simulated, in: 0...100)
@@ -706,13 +706,13 @@ private struct ProviderCard: View {
 
             if on, let snap, snap.hasData {
                 RowDivider()
-                Row(title: "Últimas 5 horas", detail: resetText(snap.session?.resetsAt, now: now)) {
+                Row(title: L("Últimas 5 horas"), detail: resetText(snap.session?.resetsAt, now: now)) {
                     Text(pctText(pct))
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                 }
                 RowDivider()
-                Row(title: "Esta semana", detail: resetText(snap.weekly?.resetsAt, now: now)) {
+                Row(title: L("Esta semana"), detail: resetText(snap.weekly?.resetsAt, now: now)) {
                     HStack(spacing: 10) {
                         LinearMeter(value: week ?? 0, tint: store.tint(p, percent: week), track: Color.primary.opacity(0.1))
                             .frame(width: 90, height: 5)
@@ -725,16 +725,16 @@ private struct ProviderCard: View {
             }
             if p == .claude && store.claudeSessionExpired {
                 RowDivider()
-                Row(title: "Sesión caducada",
-                    detail: "Abre Claude Code un momento para renovarla. Tus datos vuelven solos.") {
-                    Button("Renovar sesión") { store.renewClaudeSession() }
+                Row(title: L("Sesión caducada"),
+                    detail: L("Abre Claude Code un momento para renovarla. Tus datos vuelven solos.")) {
+                    Button(L("Renovar sesión")) { store.renewClaudeSession() }
                         .buttonStyle(.borderedProminent)
                 }
             }
             RowDivider()
-            Row(title: "Fuente",
-                detail: p == .claude ? "Tu sesión de Claude Code (Llavero de macOS). Solo lectura."
-                                     : "Registros locales de Codex en ~/.codex. Sin conexión.") {
+            Row(title: L("Fuente"),
+                detail: p == .claude ? L("Tu sesión de Claude Code (Llavero de macOS). Solo lectura.")
+                                     : L("Registros locales de Codex en ~/.codex. Sin conexión.")) {
                 EmptyView()
             }
         }
@@ -745,15 +745,15 @@ private struct ProviderCard: View {
     private func resetText(_ d: Date?, now: Date) -> String? {
         guard let d, d > now else { return nil }
         let m = Int(d.timeIntervalSince(now) / 60)
-        if m >= 24 * 60 { return "Se reinicia en \(m / 1440) d \((m % 1440) / 60) h" }
-        if m >= 60 { return "Se reinicia en \(m / 60) h \(m % 60) min" }
-        return "Se reinicia en \(max(m, 1)) min"
+        if m >= 24 * 60 { return L("Se reinicia en %@", "\(m / 1440) d \((m % 1440) / 60) h") }
+        if m >= 60 { return L("Se reinicia en %@", "\(m / 60) h \(m % 60) min") }
+        return L("Se reinicia en %@", "\(max(m, 1)) min")
     }
 
     private func status(_ s: UsageSnapshot?) -> String {
-        guard let s else { return "Cargando…" }
+        guard let s else { return L("Cargando…") }
         if let e = s.error { return e }
-        return s.hasData ? "Conectado" : "Sin datos todavía"
+        return s.hasData ? L("Conectado") : L("Sin datos todavía")
     }
 
     private func statusColor(_ s: UsageSnapshot?) -> Color {
@@ -777,11 +777,11 @@ private struct AboutPane: View {
                 .font(.system(size: 30, weight: .bold))
                 .tracking(-0.6)
                 .padding(.top, 14)
-            Text("Versión \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0")")
+            Text(L("Versión %@", Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"))
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .padding(.top, 4)
-            Text("Tu cuota de Claude Code y Codex,\nsiempre a la vista en el notch.")
+            Text(L("Tu cuota de Claude Code y Codex,\nsiempre a la vista en el notch."))
                 .font(.system(size: 14))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
@@ -794,7 +794,7 @@ private struct AboutPane: View {
             .padding(.top, 28)
 
             Spacer()
-            Text("Hecho por @humbergarc")
+            Text(L("Hecho por @humbergarc"))
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 22)

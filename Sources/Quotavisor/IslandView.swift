@@ -158,7 +158,7 @@ struct ExpandedContent: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Ajustes")
+            .help(L("Ajustes"))
             Button { store.refreshNow() } label: {
                 Image(systemName: "arrow.clockwise")
                     .font(.system(size: 11, weight: .semibold))
@@ -170,7 +170,7 @@ struct ExpandedContent: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Actualizar ahora")
+            .help(L("Actualizar ahora"))
         }
         .padding(.horizontal, 8)
         .frame(height: store.geometry.notchHeight)
@@ -178,11 +178,11 @@ struct ExpandedContent: View {
 
     private func updatedText(now: Date) -> String {
         guard let d = Provider.allCases.compactMap({ store.snapshots[$0]?.updatedAt }).min() else {
-            return "Cargando…"
+            return L("Cargando…")
         }
         let s = Int(now.timeIntervalSince(d))
-        if s < 60 { return "Al día" }
-        return "Hace \(s / 60) min"
+        if s < 60 { return L("Al día") }
+        return L("Hace %@ min", "\(s / 60)")
     }
 }
 
@@ -229,7 +229,7 @@ struct ProviderRow: View {
 
             VStack(alignment: .trailing, spacing: 5) {
                 HStack(spacing: 0) {
-                    Text("Semana ")
+                    Text(L("Semana "))
                         .foregroundStyle(Palette.text3)
                     Text(week.map { "\(Int($0.rounded()))%" } ?? "–")
                         .foregroundStyle(Palette.text2)
@@ -266,17 +266,17 @@ struct ProviderRow: View {
         let mins = Int(reset.timeIntervalSince(now) / 60)
         let d = mins / 1440, h = (mins % 1440) / 60, m = mins % 60
         let left = d > 0 ? "\(d) d \(h) h" : h > 0 ? "\(h) h \(m) min" : "\(max(m, 1)) min"
-        return "se reinicia en \(left)"
+        return L("se reinicia en %@", left)
     }
 
     private func subtitle(now: Date) -> String {
-        guard let snapshot else { return "Cargando…" }
-        if !snapshot.hasData { return snapshot.error ?? "Sin datos todavía" }
-        guard let reset = snapshot.session?.resetsAt, reset > now else { return "Ventana de 5 h libre" }
+        guard let snapshot else { return L("Cargando…") }
+        if !snapshot.hasData { return snapshot.error ?? L("Sin datos todavía") }
+        guard let reset = snapshot.session?.resetsAt, reset > now else { return L("Ventana de 5 h libre") }
         let mins = Int(reset.timeIntervalSince(now) / 60)
         let left = mins >= 60 ? "\(mins / 60) h \(mins % 60) min" : "\(max(mins, 1)) min"
         if let e = snapshot.error { return "\(e) · \(left)" }
-        return "5 h · se reinicia en \(left)"
+        return L("5 h · se reinicia en %@", left)
     }
 }
 

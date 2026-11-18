@@ -115,16 +115,16 @@ final class NotchPanel: NSPanel {
 
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
-        menu.addItem(ActionItem("Ajustes…") { [weak self] in self?.store.openSettings?() })
+        menu.addItem(ActionItem(L("Ajustes…")) { [weak self] in self?.store.openSettings?() })
         if store.claudeSessionExpired {
-            menu.addItem(ActionItem("Renovar sesión de Claude…") { [weak self] in self?.store.renewClaudeSession() })
+            menu.addItem(ActionItem(L("Renovar sesión de Claude…")) { [weak self] in self?.store.renewClaudeSession() })
         }
-        menu.addItem(ActionItem("Actualizar ahora") { [weak self] in self?.store.refreshNow() })
+        menu.addItem(ActionItem(L("Actualizar ahora")) { [weak self] in self?.store.refreshNow() })
         menu.addItem(.separator())
 
-        let show = NSMenuItem(title: "Mostrar en el notch", action: nil, keyEquivalent: "")
+        let show = NSMenuItem(title: L("Mostrar en el notch"), action: nil, keyEquivalent: "")
         let showMenu = NSMenu()
-        let auto = ActionItem("Automático (el último usado)") { [weak self] in self?.store.pinned = nil }
+        let auto = ActionItem(L("Automático (el último usado)")) { [weak self] in self?.store.pinned = nil }
         auto.state = store.pinned == nil ? .on : .off
         showMenu.addItem(auto)
         for p in Provider.allCases {
@@ -135,7 +135,7 @@ final class NotchPanel: NSPanel {
         show.submenu = showMenu
         menu.addItem(show)
 
-        let every = NSMenuItem(title: "Actualizar cada", action: nil, keyEquivalent: "")
+        let every = NSMenuItem(title: L("Actualizar cada"), action: nil, keyEquivalent: "")
         let everyMenu = NSMenu()
         for m in [1, 2, 5, 10, 15, 30] {
             let item = ActionItem("\(m) min") { [weak self] in self?.store.refreshMinutes = m }
@@ -146,14 +146,14 @@ final class NotchPanel: NSPanel {
         menu.addItem(every)
 
         menu.addItem(.separator())
-        let login = ActionItem("Abrir al iniciar sesión") { [weak self] in
+        let login = ActionItem(L("Abrir al iniciar sesión")) { [weak self] in
             guard let self else { return }
             self.store.launchAtLogin.toggle()
         }
         login.state = store.launchAtLogin ? .on : .off
         menu.addItem(login)
         menu.addItem(.separator())
-        menu.addItem(ActionItem("Salir de Quotavisor") { NSApp.terminate(nil) })
+        menu.addItem(ActionItem(L("Salir de Quotavisor")) { NSApp.terminate(nil) })
         return menu
     }
 }

@@ -176,7 +176,7 @@ final class UsageStore: ObservableObject {
     // MARK: Sesión de Claude
 
     var claudeSessionExpired: Bool {
-        snapshots[.claude]?.error?.hasPrefix("Sesión caducada") == true
+        snapshots[.claude]?.error?.hasPrefix(L("Sesión caducada")) == true
     }
 
     /// Abre Terminal con `claude`: al arrancar, Claude Code renueva su sesión
@@ -186,8 +186,8 @@ final class UsageStore: ObservableObject {
         let script = """
         #!/bin/zsh -l
         clear
-        echo "Quotavisor: renovando la sesión de Claude Code…"
-        echo "Cuando Claude Code arranque, ya puedes salir con /exit."
+        echo "\(L("Quotavisor: renovando la sesión de Claude Code…"))"
+        echo "\(L("Cuando Claude Code arranque, ya puedes salir con /exit."))"
         echo
         claude
         """

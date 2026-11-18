@@ -84,7 +84,7 @@ actor ClaudeSource {
             s.lastActive = lastActive
             if !s.hasData || defaults.bool(forKey: "claude.limited") {
                 let mins = max(1, Int(nextAllowed.timeIntervalSinceNow / 60) + 1)
-                s.error = "Anthropic limita las consultas · reintento en \(mins) min"
+                s.error = L("Anthropic limita las consultas · reintento en %@ min", "\(mins)")
             }
             return s
         }
@@ -92,7 +92,7 @@ actor ClaudeSource {
         var snap = await request()
         // Sesión caducada: Claude Code la renueva al arrancar. Lo lanzamos en
         // segundo plano (una petición mínima con Haiku) y reintentamos.
-        if snap.error?.hasPrefix("Sesión caducada") == true, await autoRenew() {
+        if snap.error?.hasPrefix(L("Sesión caducada")) == true, await autoRenew() {
             token = nil
             nextAllowed = .distantPast
             snap = await request()
@@ -130,7 +130,7 @@ actor ClaudeSource {
         var snap = UsageSnapshot()
 
         guard let tok = loadToken() else {
-            snap.error = "Inicia sesión en Claude Code"
+            snap.error = L("Inicia sesión en Claude Code")
             return snap
         }
 
@@ -152,7 +152,7 @@ actor ClaudeSource {
                 defaults.set(true, forKey: "claude.limited")
                 var s = cached ?? snap
                 let mins = max(1, Int(max(wait, minInterval) / 60))
-                s.error = "Anthropic limita las consultas · reintento en \(mins) min"
+                s.error = L("Anthropic limita las consultas · reintento en %@ min", "\(mins)")
                 return s
             }
             if code == 401 || code == 403 {
@@ -160,13 +160,13 @@ actor ClaudeSource {
                 defaults.set(false, forKey: "claude.limited")
                 nextAllowed = .now.addingTimeInterval(60)
                 var s = cached ?? snap
-                s.error = "Sesión caducada · pulsa para renovar"
+                s.error = L("Sesión caducada · pulsa para renovar")
                 return s
             }
             guard code == 200,
                   let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any]
             else {
-                snap.error = "Error \(code) al consultar uso"
+                snap.error = L("Error %@ al consultar uso", "\(code)")
                 return snap
             }
             snap.session = window(obj["five_hour"])
@@ -176,7 +176,7 @@ actor ClaudeSource {
             defaults.set(false, forKey: "claude.limited")
             if snap.hasData { cached = snap }
         } catch {
-            snap.error = "Sin conexión"
+            snap.error = L("Sin conexión")
         }
         return snap
     }
@@ -274,7 +274,7 @@ struct CodexSource {
             }
             if snap.hasData { snap.updatedAt = .now; return snap }
         }
-        snap.error = files.isEmpty ? "Sin sesiones de Codex" : "Sin datos de límites aún"
+        snap.error = files.isEmpty ? L("Sin sesiones de Codex") : L("Sin datos de límites aún")
         return snap
     }
 
